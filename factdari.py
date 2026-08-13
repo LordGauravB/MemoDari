@@ -114,8 +114,8 @@ class FactDariApp:
         self.STATS_FONT = config.get_font('stats')
 
         # AI model/pricing (used for logging and cost estimation)
-        self.ai_model = config.AI_PRICING.get('model', "deepseek-ai/DeepSeek-V4-Pro")
-        self.ai_provider = config.AI_PRICING.get('provider', "together")
+        self.ai_model = config.AI_PRICING.get('model', "deepseek/deepseek-v4-pro")
+        self.ai_provider = config.AI_PRICING.get('provider', "openrouter")
         try:
             self.ai_prompt_cost_per_1k = float(config.AI_PRICING.get('prompt_cost_per_1k', 0) or 0)
         except Exception:
@@ -136,6 +136,9 @@ class FactDariApp:
         self.ai_question_temperature = float(ai_req['question_temperature'])
         # DeepSeek V4 Pro reasoning toggle (False = Non-Think mode)
         self.ai_reasoning_enabled = bool(ai_req.get('reasoning_enabled', False))
+        # Optional OpenRouter attribution headers
+        self.ai_referer = ai_req.get('referer', '')
+        self.ai_app_title = ai_req.get('app_title', '')
 
         # UI timing/opacity settings
         ui_cfg = config.UI_CONFIG
@@ -1074,7 +1077,7 @@ class FactDariApp:
         self.speaking_thread.start()
 
     def explain_fact_with_ai(self):
-        """Open a popup and ask Together AI to explain the current fact in simple words."""
+        """Open a popup and ask OpenRouter to explain the current fact in simple words."""
         if not self._is_action_allowed("use AI explain") or not self.current_fact_id:
             return
         if getattr(self, "ai_request_inflight", False):
@@ -1093,9 +1096,9 @@ class FactDariApp:
 
         fact_id = self.current_fact_id
         session_id = self.current_session_id
-        api_key = config.get_together_api_key()
+        api_key = config.get_openrouter_api_key()
         if not api_key:
-            messagebox.showerror("API Key Missing", "Set FACTDARI_TOGETHER_API_KEY or TOGETHER_API_KEY environment variable.")
+            messagebox.showerror("API Key Missing", "Set FACTDARI_OPENROUTER_API_KEY or OPENROUTER_API_KEY environment variable.")
             return
 
         # Pause session timer while popup is open
@@ -1201,7 +1204,7 @@ class FactDariApp:
 
         def worker():
             nonlocal ai_usage_row_id, track_reading_time
-            result_text, usage_info = self._call_together_ai(fact_text, api_key)
+            result_text, usage_info = self._call_openrouter_ai(fact_text, api_key)
 
             try:
                 ai_usage_row_id = self._record_ai_usage(usage_info, fact_id=fact_id, session_id=session_id, reading_duration_sec=0)
@@ -1215,13 +1218,28 @@ class FactDariApp:
 
         threading.Thread(target=worker, daemon=True).start()
 
-    def _call_together_ai(self, fact_text: str, api_key: str):
-        """Call Together AI to explain a fact; returns (text, usage_info)."""
+    def _ai_headers(self, api_key: str):
+        """Build request headers for the OpenRouter chat completions call."""
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        # Optional OpenRouter attribution headers (included only when configured)
+        referer = getattr(self, 'ai_referer', '')
+        if referer:
+            headers["HTTP-Referer"] = referer
+        app_title = getattr(self, 'ai_app_title', '')
+        if app_title:
+            headers["X-Title"] = app_title
+        return headers
+
+    def _call_openrouter_ai(self, fact_text: str, api_key: str):
+        """Call OpenRouter to explain a fact; returns (text, usage_info)."""
         started = time.perf_counter()
         usage_info = {
             "operation_type": "EXPLANATION",
-            "model": getattr(self, 'ai_model', "deepseek-ai/DeepSeek-V4-Pro"),
-            "provider": getattr(self, 'ai_provider', "together"),
+            "model": getattr(self, 'ai_model', "deepseek/deepseek-v4-pro"),
+            "provider": getattr(self, 'ai_provider', "openrouter"),
             "status": "SUCCESS",
         }
 
@@ -1254,10 +1272,7 @@ class FactDariApp:
                 # Non-Think mode unless reasoning is explicitly enabled (DeepSeek V4 Pro)
                 "reasoning": {"enabled": getattr(self, 'ai_reasoning_enabled', False)},
             }
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            }
+            headers = self._ai_headers(api_key)
             resp = requests.post(
                 self.ai_endpoint,
                 json=payload,
@@ -1320,13 +1335,13 @@ class FactDariApp:
     # Question Mode: LLM-generated questions before showing facts
     # -----------------------------------------------------------------------------
 
-    def _call_together_ai_for_questions(self, fact_text: str, api_key: str):
-        """Call Together AI to generate 3 questions for a fact; returns (list_of_questions, usage_info)."""
+    def _call_openrouter_ai_for_questions(self, fact_text: str, api_key: str):
+        """Call OpenRouter to generate 3 questions for a fact; returns (list_of_questions, usage_info)."""
         started = time.perf_counter()
         usage_info = {
             "operation_type": "QUESTION_GENERATION",
-            "model": getattr(self, 'ai_model', "deepseek-ai/DeepSeek-V4-Pro"),
-            "provider": getattr(self, 'ai_provider', "together"),
+            "model": getattr(self, 'ai_model', "deepseek/deepseek-v4-pro"),
+            "provider": getattr(self, 'ai_provider', "openrouter"),
             "status": "SUCCESS",
         }
 
@@ -1363,10 +1378,7 @@ class FactDariApp:
                 # Non-Think mode unless reasoning is explicitly enabled (DeepSeek V4 Pro)
                 "reasoning": {"enabled": getattr(self, 'ai_reasoning_enabled', False)},
             }
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            }
+            headers = self._ai_headers(api_key)
             resp = requests.post(
                 self.ai_endpoint,
                 json=payload,
@@ -1433,11 +1445,11 @@ class FactDariApp:
         The count parameter is kept for API compatibility but all questions are stored.
         LLM costs are logged to AIUsageLogs with OperationType='QUESTION_GENERATION'.
         """
-        api_key = config.get_together_api_key()
+        api_key = config.get_openrouter_api_key()
         if not api_key:
             return []
 
-        questions, usage_info = self._call_together_ai_for_questions(fact_content, api_key)
+        questions, usage_info = self._call_openrouter_ai_for_questions(fact_content, api_key)
         if not questions:
             return []
 
@@ -1517,7 +1529,7 @@ class FactDariApp:
                 return q_text, q_id
 
         # No cached questions; attempt background generation if API key exists
-        api_key = config.get_together_api_key()
+        api_key = config.get_openrouter_api_key()
         if not api_key:
             return fallback_question, None
 

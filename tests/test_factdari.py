@@ -320,7 +320,7 @@ def test_estimate_ai_cost_typical():
     assert abs(cost - 0.00043) < 0.00001
 
 
-def test_call_together_ai_timeout_sets_failed(monkeypatch):
+def test_call_openrouter_ai_timeout_sets_failed(monkeypatch):
     app = make_app()
     app.ai_endpoint = "https://example.com"
     app.ai_timeout_seconds = 5
@@ -329,13 +329,13 @@ def test_call_together_ai_timeout_sets_failed(monkeypatch):
 
     monkeypatch.setattr(factdari.requests, "post", MagicMock(side_effect=requests.exceptions.Timeout))
 
-    message, usage = app._call_together_ai("Fact text", "key")
+    message, usage = app._call_openrouter_ai("Fact text", "key")
 
     assert "Timed out" in message
     assert usage["status"] == "FAILED"
 
 
-def test_call_together_ai_connection_error_sets_failed(monkeypatch):
+def test_call_openrouter_ai_connection_error_sets_failed(monkeypatch):
     app = make_app()
     app.ai_endpoint = "https://example.com"
     app.ai_timeout_seconds = 5
@@ -344,20 +344,20 @@ def test_call_together_ai_connection_error_sets_failed(monkeypatch):
 
     monkeypatch.setattr(factdari.requests, "post", MagicMock(side_effect=requests.exceptions.ConnectionError))
 
-    message, usage = app._call_together_ai("Fact text", "key")
+    message, usage = app._call_openrouter_ai("Fact text", "key")
 
     assert "Network error" in message
     assert usage["status"] == "FAILED"
 
 
-def test_call_together_ai_payload_uses_v4_pro_non_think(monkeypatch):
+def test_call_openrouter_ai_payload_uses_v4_pro_non_think(monkeypatch):
     app = make_app()
     app.ai_endpoint = "https://example.com"
     app.ai_timeout_seconds = 5
     app.ai_explanation_max_tokens = 100
     app.ai_explanation_temperature = 0.5
-    app.ai_model = "deepseek-ai/DeepSeek-V4-Pro"
-    app.ai_provider = "together"
+    app.ai_model = "deepseek/deepseek-v4-pro"
+    app.ai_provider = "openrouter"
     app.ai_reasoning_enabled = False
 
     mock_resp = MagicMock()
@@ -369,12 +369,12 @@ def test_call_together_ai_payload_uses_v4_pro_non_think(monkeypatch):
     mock_post = MagicMock(return_value=mock_resp)
     monkeypatch.setattr(factdari.requests, "post", mock_post)
 
-    message, usage = app._call_together_ai("Fact text", "key")
+    message, usage = app._call_openrouter_ai("Fact text", "key")
 
     assert message == "An explanation."
     assert usage["status"] == "SUCCESS"
     payload = mock_post.call_args.kwargs["json"]
-    assert payload["model"] == "deepseek-ai/DeepSeek-V4-Pro"
+    assert payload["model"] == "deepseek/deepseek-v4-pro"
     assert payload["reasoning"] == {"enabled": False}
 
 
@@ -445,7 +445,7 @@ def test_get_or_generate_question_blocks_duplicate_inflight(monkeypatch):
     app.question_generation_cooldown_seconds = 60
     app.root = MagicMock()
 
-    monkeypatch.setattr(config, "get_together_api_key", lambda: "key")
+    monkeypatch.setattr(config, "get_openrouter_api_key", lambda: "key")
 
     question, q_id = app._get_or_generate_question(42, "Fact text")
 
@@ -462,7 +462,7 @@ def test_get_or_generate_question_respects_cooldown(monkeypatch):
     app.question_generation_cooldown_seconds = 60
     app.root = MagicMock()
 
-    monkeypatch.setattr(config, "get_together_api_key", lambda: "key")
+    monkeypatch.setattr(config, "get_openrouter_api_key", lambda: "key")
 
     question, q_id = app._get_or_generate_question(42, "Fact text")
 
@@ -590,7 +590,7 @@ def test_get_or_generate_question_returns_cached_question(monkeypatch):
     app.question_generation_last_attempt = {}
     app.question_generation_cooldown_seconds = 60
 
-    monkeypatch.setattr(config, "get_together_api_key", lambda: "key")
+    monkeypatch.setattr(config, "get_openrouter_api_key", lambda: "key")
 
     question, q_id = app._get_or_generate_question(42, "Fact text")
 
@@ -606,7 +606,7 @@ def test_get_or_generate_question_falls_back_without_api_key(monkeypatch):
     app.question_generation_last_attempt = {}
     app.question_generation_cooldown_seconds = 60
 
-    monkeypatch.setattr(config, "get_together_api_key", lambda: None)
+    monkeypatch.setattr(config, "get_openrouter_api_key", lambda: None)
 
     question, q_id = app._get_or_generate_question(42, "Fact text")
 

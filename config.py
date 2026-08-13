@@ -142,16 +142,16 @@ UI_CONFIG = {
 
 # AI pricing/configuration (used for cost estimation and logging)
 AI_PRICING = {
-    'provider': os.environ.get('FACTDARI_AI_PROVIDER', 'together'),
-    'model': os.environ.get('FACTDARI_AI_MODEL', 'deepseek-ai/DeepSeek-V4-Pro'),
-    # Defaults per 1M tokens (DeepSeek V4 Pro on Together AI): $2.10 input, $4.40 output
-    'prompt_cost_per_1k': _get_float_env('FACTDARI_AI_PROMPT_COST_PER_1K', '0.0021'),
-    'completion_cost_per_1k': _get_float_env('FACTDARI_AI_COMPLETION_COST_PER_1K', '0.0044'),
+    'provider': os.environ.get('FACTDARI_AI_PROVIDER', 'openrouter'),
+    'model': os.environ.get('FACTDARI_AI_MODEL', 'deepseek/deepseek-v4-pro'),
+    # Defaults per 1M tokens (DeepSeek V4 Pro on OpenRouter): $0.435 input, $0.87 output
+    'prompt_cost_per_1k': _get_float_env('FACTDARI_AI_PROMPT_COST_PER_1K', '0.000435'),
+    'completion_cost_per_1k': _get_float_env('FACTDARI_AI_COMPLETION_COST_PER_1K', '0.00087'),
     'currency': os.environ.get('FACTDARI_AI_CURRENCY', 'USD'),
 }
 
 AI_REQUEST_CONFIG = {
-    'endpoint': os.environ.get('FACTDARI_AI_ENDPOINT', 'https://api.together.xyz/v1/chat/completions'),
+    'endpoint': os.environ.get('FACTDARI_AI_ENDPOINT', 'https://openrouter.ai/api/v1/chat/completions'),
     'timeout_seconds': int(os.environ.get('FACTDARI_AI_TIMEOUT_SECONDS', '30')),
     'explanation_max_tokens': int(os.environ.get('FACTDARI_AI_EXPLANATION_MAX_TOKENS', '800')),
     'explanation_temperature': _get_float_env('FACTDARI_AI_EXPLANATION_TEMPERATURE', '0.35'),
@@ -161,6 +161,9 @@ AI_REQUEST_CONFIG = {
     # DeepSeek V4 Pro reasoning toggle. Default off = Non-Think mode (fast, direct,
     # no chain-of-thought). Set FACTDARI_AI_REASONING_ENABLED=true for Think mode.
     'reasoning_enabled': _get_bool_env('FACTDARI_AI_REASONING_ENABLED', 'false'),
+    # Optional OpenRouter attribution headers (HTTP-Referer / X-Title). Safe to leave as defaults.
+    'referer': os.environ.get('FACTDARI_AI_REFERER', 'https://github.com/gaurav3815/FactDari'),
+    'app_title': os.environ.get('FACTDARI_AI_TITLE', 'FactDari'),
 }
 
 
@@ -201,12 +204,11 @@ def get_font(font_type):
     else:
         return (UI_CONFIG['font_family'], UI_CONFIG['normal_font_size'])
 
-def get_together_api_key():
-    """Fetch Together AI API key from environment."""
+def get_openrouter_api_key():
+    """Fetch OpenRouter API key from environment."""
     return (
-        os.environ.get('FACTDARI_TOGETHER_API_KEY')
-        or os.environ.get('TOGETHER_API_KEY')
-        or os.environ.get('TOGETHER_API_TOKEN')
+        os.environ.get('FACTDARI_OPENROUTER_API_KEY')
+        or os.environ.get('OPENROUTER_API_KEY')
     )
 
 # (no chart config helpers are needed; Chart.js is configured in the template)

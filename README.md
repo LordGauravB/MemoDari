@@ -15,7 +15,7 @@ A lightweight desktop widget application for displaying and managing facts, desi
 - **Navigation Controls**: Easy navigation through facts with previous/next buttons
 - **Search & Filter**: Filter facts by category, favorites, or knowledge status
 - **Dark Theme**: Eye-friendly dark interface with customizable transparency
-- **AI Explanations**: Get AI-powered explanations for any fact using Together AI (DeepSeek V4 Pro, Non-Think mode)
+- **AI Explanations**: Get AI-powered explanations for any fact using OpenRouter (DeepSeek V4 Pro, Non-Think mode)
 - **AI-Generated Questions**: Automatically generate review questions from facts to test your knowledge
 
 ## Key Functionality
@@ -127,10 +127,10 @@ Available on:
    ```
 3. Set up the SQL Server database using the script in `database_setup/factdari_setup.sql`
 4. Configure your database connection in `config.py`
-5. (Optional) Set your Together AI API key for AI explanations:
+5. (Optional) Set your OpenRouter API key for AI explanations:
    ```
    # Windows (PowerShell)
-   $env:FACTDARI_TOGETHER_API_KEY = "your-api-key"
+   $env:FACTDARI_OPENROUTER_API_KEY = "your-api-key"
    # Or set permanently via System Environment Variables
    ```
 6. Run the application:
@@ -291,7 +291,7 @@ util/RunFactDari.vbs
 - **Backend**: SQL Server database for fact storage
 - **Analytics**: Flask web server with Chart.js visualizations
 - **Speech**: pyttsx3 for text-to-speech functionality
-- **AI**: Together AI API with DeepSeek V4 Pro model (Non-Think mode) for fact explanations and question generation
+- **AI**: OpenRouter API with DeepSeek V4 Pro model (Non-Think mode) for fact explanations and question generation
 - **Configuration**: Centralized config.py for all settings
 - **Gamification**: SQL-backed XP/levels, daily streak tracking, and achievements (see `gamification.py`)
 
@@ -337,9 +337,11 @@ Edit `config.py` to customize:
 - `FACTDARI_XP_DAILY_CHECKIN` (default: `2`): XP on daily streak check-in
 
 ### AI Configuration
-- `FACTDARI_TOGETHER_API_KEY` or `TOGETHER_API_KEY` or `TOGETHER_API_TOKEN`: Your Together AI API key (required for AI explanations and question generation)
-- The AI feature uses the DeepSeek V4 Pro model (`deepseek-ai/DeepSeek-V4-Pro`) via Together AI
-- `FACTDARI_AI_MODEL`: override the model id (default: `deepseek-ai/DeepSeek-V4-Pro`)
+- `FACTDARI_OPENROUTER_API_KEY` or `OPENROUTER_API_KEY`: Your OpenRouter API key (required for AI explanations and question generation)
+- The AI feature uses the DeepSeek V4 Pro model (`deepseek/deepseek-v4-pro`) via OpenRouter
+- `FACTDARI_AI_MODEL`: override the model id (default: `deepseek/deepseek-v4-pro`)
+- `FACTDARI_AI_ENDPOINT`: override the API endpoint (default: `https://openrouter.ai/api/v1/chat/completions`)
+- `FACTDARI_AI_REFERER` / `FACTDARI_AI_TITLE`: optional OpenRouter attribution headers (`HTTP-Referer` / `X-Title`)
 - `FACTDARI_AI_REASONING_ENABLED` (default: `false`): runs DeepSeek V4 Pro in Non-Think mode for fast, direct answers; set to `true` to enable thinking
 - `FACTDARI_AI_PROMPT_COST_PER_1K` (default: `0.0021`) and `FACTDARI_AI_COMPLETION_COST_PER_1K` (default: `0.0044`): per-1K-token prices used for cost tracking ($2.10 / $4.40 per 1M tokens)
 - Cost tracking is automatic based on token usage

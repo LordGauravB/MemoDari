@@ -159,7 +159,7 @@ class TestAIPricingConfig:
     def test_ai_provider_default(self):
         """Test default AI provider."""
         import config
-        assert config.AI_PRICING['provider'] == 'together'
+        assert config.AI_PRICING['provider'] == 'openrouter'
 
     def test_ai_model_default(self):
         """Test default AI model."""
@@ -178,9 +178,14 @@ class TestAIPricingConfig:
         assert len(config.AI_PRICING['currency']) == 3  # ISO currency code
 
     def test_ai_model_default_is_v4_pro(self):
-        """Test default AI model is DeepSeek V4 Pro."""
+        """Test default AI model is DeepSeek V4 Pro (OpenRouter slug)."""
         import config
-        assert config.AI_PRICING['model'] == 'deepseek-ai/DeepSeek-V4-Pro'
+        assert config.AI_PRICING['model'] == 'deepseek/deepseek-v4-pro'
+
+    def test_ai_endpoint_default_is_openrouter(self):
+        """Test default AI endpoint points at OpenRouter."""
+        import config
+        assert config.AI_REQUEST_CONFIG['endpoint'] == 'https://openrouter.ai/api/v1/chat/completions'
 
     def test_ai_reasoning_default_disabled(self):
         """Test reasoning defaults to Non-Think mode (disabled)."""
@@ -220,24 +225,24 @@ class TestHelperFunctions:
         assert isinstance(font, tuple)
         assert len(font) == 2
 
-    def test_get_together_api_key_from_env(self, monkeypatch):
+    def test_get_openrouter_api_key_from_env(self, monkeypatch):
         """Test API key retrieval from environment."""
-        monkeypatch.setenv('FACTDARI_TOGETHER_API_KEY', 'test-key-123')
+        monkeypatch.setenv('FACTDARI_OPENROUTER_API_KEY', 'test-key-123')
         # Need to reload config to pick up new env var
         import importlib
         import config
         importlib.reload(config)
-        key = config.get_together_api_key()
+        key = config.get_openrouter_api_key()
         assert key == 'test-key-123'
 
-    def test_get_together_api_key_fallback(self, monkeypatch):
+    def test_get_openrouter_api_key_fallback(self, monkeypatch):
         """Test API key fallback to alternative env vars."""
-        monkeypatch.delenv('FACTDARI_TOGETHER_API_KEY', raising=False)
-        monkeypatch.setenv('TOGETHER_API_KEY', 'fallback-key')
+        monkeypatch.delenv('FACTDARI_OPENROUTER_API_KEY', raising=False)
+        monkeypatch.setenv('OPENROUTER_API_KEY', 'fallback-key')
         import importlib
         import config
         importlib.reload(config)
-        key = config.get_together_api_key()
+        key = config.get_openrouter_api_key()
         assert key == 'fallback-key'
 
 

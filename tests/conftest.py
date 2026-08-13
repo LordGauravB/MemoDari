@@ -51,7 +51,7 @@ def mock_env_vars(monkeypatch):
     monkeypatch.setenv('FACTDARI_DB_SERVER', 'localhost\\SQLEXPRESS')
     monkeypatch.setenv('FACTDARI_DB_NAME', 'FactDari_Test')
     monkeypatch.setenv('FACTDARI_DB_TRUSTED', 'yes')
-    monkeypatch.setenv('FACTDARI_TOGETHER_API_KEY', 'test-api-key-12345')
+    monkeypatch.setenv('FACTDARI_OPENROUTER_API_KEY', 'test-api-key-12345')
     monkeypatch.setenv('FACTDARI_IDLE_TIMEOUT_SECONDS', '300')
     monkeypatch.setenv('FACTDARI_XP_REVIEW_BASE', '1')
     monkeypatch.setenv('FACTDARI_XP_FAVORITE', '1')
@@ -117,8 +117,8 @@ def sample_ai_usage():
         'ProfileID': 1,
         'OperationType': 'explain',
         'Status': 'SUCCESS',
-        'ModelName': 'deepseek-ai/DeepSeek-V4-Pro',
-        'Provider': 'together',
+        'ModelName': 'deepseek/deepseek-v4-pro',
+        'Provider': 'openrouter',
         'InputTokens': 150,
         'OutputTokens': 200,
         'TotalTokens': 350,

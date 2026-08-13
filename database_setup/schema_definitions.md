@@ -107,7 +107,7 @@ This is a comprehensive reference guide defining every table and column in your 
 ---
 
 ### 7. Table: `AIUsageLogs`
-**Definition:** Audit trail for API calls to LLMs (Together AI / DeepSeek).
+**Definition:** Audit trail for API calls to LLMs (OpenRouter / DeepSeek).
 **Primary Use:** Cost estimation and debugging AI latency.
 
 | Column | Data Type | Definition & Application Use Case |
